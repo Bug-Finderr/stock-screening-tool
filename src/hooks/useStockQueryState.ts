@@ -1,12 +1,11 @@
 import { useQueryState } from "nuqs";
 
 export const useStockQueryState = () => {
-  const [query, setQuery] = useQueryState("query", {
+  const [query, setQuery] = useQueryState<string>("query", {
     defaultValue: "",
-    parse: (value) => (typeof value === "string" ? value : ""),
-    serialize: (value) => value,
+    parse: (value) => decodeURIComponent(value as string),
+    serialize: (value) => encodeURIComponent(value || ""),
     history: "push",
-    persist: true,
   });
 
   return { query, setQuery };

@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button";
 import {
   ChevronFirstIcon,
+  ChevronLastIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ChevronLastIcon,
 } from "lucide-react";
 
 interface PaginationProps {

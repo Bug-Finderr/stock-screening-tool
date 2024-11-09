@@ -10,3 +10,16 @@ export interface Stock {
   currentRatio: number;
   grossMargin: number;
 }
+
+export const columns: (keyof Stock)[] = [
+  "ticker",
+  "marketCapitalization",
+  "peRatio",
+  "roe",
+  "debtToEquity",
+  "dividendYield",
+  "revenueGrowth",
+  "epsGrowth",
+  "currentRatio",
+  "grossMargin",
+];

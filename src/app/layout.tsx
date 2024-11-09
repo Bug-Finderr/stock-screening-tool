@@ -3,9 +3,9 @@ import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
-import "./globals.css";
-import { Suspense } from "react";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { Suspense } from "react";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Stock Screening Tool",

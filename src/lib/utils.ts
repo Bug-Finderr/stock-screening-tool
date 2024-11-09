@@ -1,7 +1,7 @@
+import { Stock } from "@/types/stock";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { Stock } from "@/types/stock";
-import { Condition } from "./parser";
+import { Condition } from "@/types/condition";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

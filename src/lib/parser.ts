@@ -1,10 +1,5 @@
+import { Condition } from "@/types/condition";
 import { Stock } from "@/types/stock";
-
-export interface Condition {
-  field: keyof Omit<Stock, "ticker">;
-  operator: ">" | "<" | "=";
-  value: number;
-}
 
 const FIELD_MAP: Record<string, keyof Omit<Stock, "ticker">> = {
   "market capitalization": "marketCapitalization",

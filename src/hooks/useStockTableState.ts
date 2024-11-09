@@ -1,5 +1,5 @@
+import { Stock, columns } from "@/types/stock";
 import { useQueryState } from "nuqs";
-import { Stock } from "@/types/stock";
 
 type SortDirection = "ascending" | "descending" | "";
 
@@ -7,38 +7,29 @@ export const useStockTableState = () => {
   const [sortKey, setSortKey] = useQueryState<keyof Stock | null>("sortKey", {
     defaultValue: null,
     parse: (value) =>
-      typeof value === "string" ? (value as keyof Stock) : null,
-    serialize: (value) => value || "",
+      columns.includes(value as keyof Stock) ? (value as keyof Stock) : null,
     history: "push",
-    persist: true,
   });
 
-  const [sortDirection, setSortDirection] = useQueryState<SortDirection | null>(
+  const [sortDirection, setSortDirection] = useQueryState<SortDirection>(
     "sortDirection",
     {
-      defaultValue: null,
-      parse: (value) =>
-        value === "ascending" || value === "descending" ? value : null,
-      serialize: (value) => value || "",
+      defaultValue: "",
+      parse: (value) => value as SortDirection,
       history: "push",
-      persist: true,
     },
   );
 
   const [currentPage, setCurrentPage] = useQueryState<number>("page", {
     defaultValue: 1,
-    parse: (value) => parseInt(value as string, 10) || 1,
-    serialize: (value) => value.toString(),
+    parse: Number,
     history: "push",
-    persist: true,
   });
 
   const [search, setSearch] = useQueryState<string>("search", {
     defaultValue: "",
-    parse: (value) => (typeof value === "string" ? value : ""),
-    serialize: (value) => value,
+    parse: String,
     history: "push",
-    persist: true,
   });
 
   return {

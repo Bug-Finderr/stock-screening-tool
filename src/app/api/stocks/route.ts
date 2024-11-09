@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { Stock } from "@/types/stock";
 import stockData from "@/data/mockData.json";
+import { Stock } from "@/types/stock";
+import { NextResponse } from "next/server";
 
 export const GET = async () => {
   try {
