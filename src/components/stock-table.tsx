@@ -4,153 +4,66 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Stock } from "@/types/stock";
 import { ChevronDownIcon, ChevronUpIcon, SearchIcon } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState, useEffect } from "react";
 import Pagination from "./pagination";
-
-type SortDirection = "ascending" | "descending";
-
-type SortConfig = {
-  key: keyof Stock;
-  direction: SortDirection;
-} | null;
+import { useStockTableState } from "@/hooks/useStockTableState";
 
 const StockTable: React.FC<{ stocks: Stock[] }> = ({ stocks }) => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const parsePage = (value: string | null): number => {
-    const parsed = parseInt(value || "1", 10);
-    return isNaN(parsed) || parsed < 1 ? 1 : parsed;
-  };
-
-  const parseSearch = (value: string | null): string => {
-    return value ? value.trim() : "";
-  };
-
-  const parseSortKey = (value: string | null): keyof Stock | null => {
-    if (!value) return null;
-    return value as keyof Stock;
-  };
-
-  const parseSortDirection = (value: string | null): SortDirection | null => {
-    if (value === "ascending" || value === "descending") {
-      return value;
-    }
-    return null;
-  };
-
-  const initialPage = useMemo(
-    () => parsePage(searchParams.get("page")),
-    [searchParams],
-  );
-  const initialSearch = useMemo(
-    () => parseSearch(searchParams.get("search")),
-    [searchParams],
-  );
-  const initialSortKey = useMemo(
-    () => parseSortKey(searchParams.get("sortKey")),
-    [searchParams],
-  );
-  const initialSortDirection = useMemo(
-    () => parseSortDirection(searchParams.get("sortDirection")),
-    [searchParams],
-  );
-
-  const [currentPage, setCurrentPage] = useState<number>(initialPage);
-  const [searchInput, setSearchInput] = useState<string>(initialSearch);
-  const [searchTerm, setSearchTerm] = useState<string>(initialSearch);
-  const [sortConfig, setSortConfig] = useState<SortConfig>(
-    initialSortKey && initialSortDirection
-      ? { key: initialSortKey, direction: initialSortDirection }
-      : null,
-  );
+  const {
+    sortKey,
+    setSortKey,
+    sortDirection,
+    setSortDirection,
+    currentPage,
+    setCurrentPage,
+    search,
+    setSearch,
+  } = useStockTableState();
 
   const itemsPerPage = 10;
 
-  useEffect(() => {
-    const params = new URLSearchParams();
-
-    params.set("page", currentPage.toString());
-
-    if (searchTerm) {
-      params.set("search", searchTerm);
-    }
-
-    if (sortConfig) {
-      params.set("sortKey", sortConfig.key);
-      params.set("sortDirection", sortConfig.direction);
-    }
-
-    router.push(`?${params.toString()}`);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, searchTerm, sortConfig]);
-
-  useEffect(() => {
-    const page = parsePage(searchParams.get("page"));
-    const search = parseSearch(searchParams.get("search"));
-    const sortKey = parseSortKey(searchParams.get("sortKey"));
-    const sortDirection = parseSortDirection(searchParams.get("sortDirection"));
-
-    if (page !== currentPage) {
-      setCurrentPage(page);
-    }
-
-    if (search !== searchTerm) {
-      setSearchTerm(search);
-      setSearchInput(search);
-    }
-
-    if (
-      sortKey &&
-      sortDirection &&
-      (!sortConfig ||
-        sortConfig.key !== sortKey ||
-        sortConfig.direction !== sortDirection)
-    ) {
-      setSortConfig({ key: sortKey, direction: sortDirection });
-    } else if (!sortKey || !sortDirection) {
-      setSortConfig(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
-
   const filteredStocks = useMemo(() => {
-    if (!searchTerm) return stocks;
+    if (!search) return stocks;
     return stocks.filter((stock) =>
-      stock.ticker.toLowerCase().includes(searchTerm.toLowerCase()),
+      stock.ticker.toLowerCase().includes(search.toLowerCase()),
     );
-  }, [stocks, searchTerm]);
+  }, [stocks, search]);
+
+  const extractTickerNumber = (ticker: string): number => {
+    const match = ticker.match(/\d+/);
+    return match ? parseInt(match[0], 10) : 0;
+  };
 
   const sortedStocks = useMemo(() => {
-    if (sortConfig === null) {
-      return filteredStocks;
-    }
+    if (!sortKey || !sortDirection) return filteredStocks;
 
-    const sorted = [...filteredStocks].sort((a, b) => {
-      const aValue = a[sortConfig.key];
-      const bValue = b[sortConfig.key];
+    return [...filteredStocks].sort((a, b) => {
+      const aValue = a[sortKey];
+      const bValue = b[sortKey];
+
+      if (sortKey === "ticker") {
+        const aNumber = extractTickerNumber(aValue as string);
+        const bNumber = extractTickerNumber(bValue as string);
+
+        if (aNumber < bNumber) return sortDirection === "ascending" ? -1 : 1;
+        if (aNumber > bNumber) return sortDirection === "ascending" ? 1 : -1;
+        return 0;
+      }
 
       if (typeof aValue === "number" && typeof bValue === "number") {
-        if (aValue < bValue) {
-          return sortConfig.direction === "ascending" ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === "ascending" ? 1 : -1;
-        }
-        return 0;
+        return sortDirection === "ascending"
+          ? aValue - bValue
+          : bValue - aValue;
       } else if (typeof aValue === "string" && typeof bValue === "string") {
         const comparison = aValue.localeCompare(bValue, undefined, {
           sensitivity: "base",
         });
-        return sortConfig.direction === "ascending" ? comparison : -comparison;
+        return sortDirection === "ascending" ? comparison : -comparison;
       } else {
         return 0;
       }
     });
-
-    return sorted;
-  }, [filteredStocks, sortConfig]);
+  }, [filteredStocks, sortKey, sortDirection]);
 
   const paginatedStocks = useMemo(() => {
     return sortedStocks.slice(
@@ -164,28 +77,31 @@ const StockTable: React.FC<{ stocks: Stock[] }> = ({ stocks }) => {
   }, [filteredStocks.length]);
 
   const requestSort = (key: keyof Stock) => {
-    setSortConfig((prevSortConfig) => {
-      if (prevSortConfig?.key === key) {
-        if (prevSortConfig.direction === "ascending") {
-          return { key, direction: "descending" };
-        } else if (prevSortConfig.direction === "descending") {
-          return null;
-        }
+    if (sortKey === key) {
+      if (sortDirection === "ascending") {
+        setSortDirection("descending");
+      } else if (sortDirection === "descending") {
+        setSortKey(null);
+        setSortDirection(null);
       }
-      return { key, direction: "ascending" };
-    });
+    } else {
+      setSortKey(key);
+      setSortDirection("ascending");
+    }
     setCurrentPage(1);
   };
+
+  const [searchInput, setSearchInput] = useState(search);
 
   const handleSearch = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSearchTerm(searchInput);
+    setSearch(searchInput);
     setCurrentPage(1);
   };
 
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) setCurrentPage(page);
-  };
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
 
   if (stocks.length === 0) return <>No results found.</>;
 
@@ -216,17 +132,12 @@ const StockTable: React.FC<{ stocks: Stock[] }> = ({ stocks }) => {
   };
 
   const getSortIndicator = (columnKey: keyof Stock) => {
-    const direction =
-      sortConfig?.key === columnKey ? sortConfig.direction : null;
-
-    switch (direction) {
-      case "ascending":
-        return <ChevronUpIcon className="ml-2" size={16} aria-hidden />;
-      case "descending":
-        return <ChevronDownIcon className="ml-2" size={16} aria-hidden />;
-      default:
-        return null;
-    }
+    if (sortKey !== columnKey) return null;
+    return sortDirection === "ascending" ? (
+      <ChevronUpIcon className="ml-2" size={16} aria-hidden />
+    ) : (
+      <ChevronDownIcon className="ml-2" size={16} aria-hidden />
+    );
   };
 
   const getPageNumbers = () => {
@@ -299,8 +210,8 @@ const StockTable: React.FC<{ stocks: Stock[] }> = ({ stocks }) => {
                   className="cursor-pointer border p-2 text-card-foreground"
                   onClick={() => requestSort(key)}
                   aria-sort={
-                    sortConfig?.key === key
-                      ? sortConfig.direction === "ascending"
+                    sortKey === key
+                      ? sortDirection === "ascending"
                         ? "ascending"
                         : "descending"
                       : "none"
@@ -338,7 +249,7 @@ const StockTable: React.FC<{ stocks: Stock[] }> = ({ stocks }) => {
         currentPage={currentPage}
         totalPages={totalPages}
         getPageNumbers={getPageNumbers}
-        handlePageChange={handlePageChange}
+        handlePageChange={setCurrentPage}
       />
     </>
   );
