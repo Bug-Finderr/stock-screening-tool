@@ -3,17 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Stock } from "@/types/stock";
-import {
-  ChevronDownIcon,
-  ChevronFirstIcon,
-  ChevronLastIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ChevronUpIcon,
-  SearchIcon,
-} from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon, SearchIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import Pagination from "./pagination";
 
 type SortDirection = "ascending" | "descending";
 
@@ -341,113 +334,12 @@ const StockTable: React.FC<{ stocks: Stock[] }> = ({ stocks }) => {
         </table>
       </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        <div className="hidden gap-2 md:flex">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(1)}
-            disabled={currentPage === 1}
-            aria-label="First Page"
-          >
-            First
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            aria-label="Previous Page"
-          >
-            Previous
-          </Button>
-
-          {getPageNumbers().map((page, index) =>
-            page === "..." ? (
-              <span key={`ellipsis-${index}`} className="px-2 py-1">
-                ...
-              </span>
-            ) : (
-              <Button
-                key={page}
-                variant={currentPage === page ? "default" : "outline"}
-                size="sm"
-                onClick={() => handlePageChange(page as number)}
-                aria-label={`Page ${page}`}
-              >
-                {page}
-              </Button>
-            ),
-          )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            aria-label="Next Page"
-          >
-            Next
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(totalPages)}
-            disabled={currentPage === totalPages}
-            aria-label="Last Page"
-          >
-            Last
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-2 md:hidden">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(1)}
-            disabled={currentPage === 1}
-            aria-label="First Page"
-          >
-            <ChevronFirstIcon size={18} />
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            aria-label="Previous Page"
-          >
-            <ChevronLeftIcon size={18} />
-          </Button>
-
-          <span className="px-2 py-1">
-            Page {currentPage} of {totalPages}
-          </span>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            aria-label="Next Page"
-          >
-            <ChevronRightIcon size={18} />
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(totalPages)}
-            disabled={currentPage === totalPages}
-            aria-label="Last Page"
-          >
-            <ChevronLastIcon size={18} />
-          </Button>
-        </div>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        getPageNumbers={getPageNumbers}
+        handlePageChange={handlePageChange}
+      />
     </>
   );
 };
